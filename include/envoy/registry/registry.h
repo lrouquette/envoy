@@ -50,7 +50,10 @@ public:
   /**
    * Gets the current map of factory implementations. This is an ordered map for sorting reasons.
    */
-  static std::map<std::string, Base*>& factories();
+  static std::map<std::string, Base*>& factories() {
+    static std::map<std::string, Base*>* factories = new std::map<std::string, Base*>;
+    return *factories;
+  }
 
   static void registerFactory(Base& factory) {
     auto result = factories().emplace(std::make_pair(factory.name(), &factory));
@@ -127,14 +130,11 @@ private:
 /**
  * Macro used for static registration.
  */
-#define REGISTER_FACTORY_IMPL(FACTORY, BASE)                                                       \
+#define REGISTER_FACTORY(FACTORY, BASE)                                                            \
+  void forceStaticLink##FACTORY() {}                                                               \
   static Envoy::Registry::RegisterFactory</* NOLINT(fuchsia-statically-constructed-objects) */     \
                                           FACTORY, BASE>                                           \
       FACTORY##_registered
-
-#define REGISTER_FACTORY(FACTORY, BASE)                                                            \
-  void forceStaticLink##FACTORY() { REGISTER_FACTORY_IMPL(FACTORY, BASE); }                        \
-  REGISTER_FACTORY_IMPL(FACTORY, BASE)
 
 /**
  * Macro used for static registration declaration.
